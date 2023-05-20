@@ -86,5 +86,5 @@ app.get("/patients", async (req, res) => {
 
 const port = process.env.PORT || 3001;
 app.listen(port, () => {
-  console.log("App is running");
+  console.log("App is running on server 3001");
 });
