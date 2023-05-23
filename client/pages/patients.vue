@@ -198,7 +198,8 @@
             v-else
             v-for="vitalSign in vitalSigns"
             :key="vitalSign.name"
-            class="mb-4 hover:bg-gray-100"
+            class="mb-4 hover:bg-gray-100 cursor-pointer"
+            @click="fetchPatientTtvs(vitalSign.id)"
           >
             <div class="border px-4 py-2">{{ vitalSign.name }}</div>
           </div>
@@ -214,86 +215,11 @@
 
           <div class="bg-white rounded-lg shadow-lg p-6 relative">
             <h2 class="text-xl font-bold mb-4">Patient's statistics</h2>
-            <form @submit.prevent="submitVitalSign">
-              <div class="mb-4">
-                <label for="patientName" class="font-bold"
-                  >Patient's Name</label
-                >
-                <input
-                  type="text"
-                  v-model="patientName"
-                  id="patientName"
-                  class="border border-gray-300 px-4 py-2 rounded-lg w-full"
-                  placeholder="Enter patient's name"
-                />
-              </div>
-              <div class="grid grid-cols-2 gap-4 mb-4">
-                <div>
-                  <label for="temperature" class="font-bold">Temperature</label>
-                  <input
-                    type="number"
-                    v-model="temperature"
-                    id="temperature"
-                    class="border border-gray-300 px-4 py-2 rounded-lg w-full"
-                    placeholder="Enter temperature"
-                  />
-                </div>
-                <div>
-                  <label for="heartRate" class="font-bold">Heart Rate</label>
-                  <input
-                    type="number"
-                    v-model="heartRate"
-                    id="heartRate"
-                    class="border border-gray-300 px-4 py-2 rounded-lg w-full"
-                    placeholder="Enter heart rate"
-                  />
-                </div>
-              </div>
-              <div class="grid grid-cols-2 gap-4 mb-4">
-                <div>
-                  <label for="systolicBP" class="font-bold"
-                    >Blood Pressure (Systolic)</label
-                  >
-                  <input
-                    type="number"
-                    v-model="systolicBP"
-                    id="systolicBP"
-                    class="border border-gray-300 px-4 py-2 rounded-lg w-full"
-                    placeholder="Enter systolic blood pressure"
-                  />
-                </div>
-                <div>
-                  <label for="diastolicBP" class="font-bold"
-                    >Blood Pressure (Diastolic)</label
-                  >
-                  <input
-                    type="number"
-                    v-model="diastolicBP"
-                    id="diastolicBP"
-                    class="border border-gray-300 px-4 py-2 rounded-lg w-full"
-                    placeholder="Enter diastolic blood pressure"
-                  />
-                </div>
-              </div>
-              <div class="mb-4">
-                <label for="respiratoryRate" class="font-bold"
-                  >Respiratory Rate</label
-                >
-                <input
-                  type="number"
-                  v-model="respiratoryRate"
-                  id="respiratoryRate"
-                  class="border border-gray-300 px-4 py-2 rounded-lg w-full"
-                  placeholder="Enter respiratory rate"
-                />
-              </div>
-              <button
-                type="submit"
-                class="bg-blue-500 text-white px-4 py-2 rounded-lg w-full"
-              >
-                Submit
-              </button>
-            </form>
+
+            <BloodPressureChart
+              :data="selectedBloodPressure"
+              :options="chartOptions"
+            />
 
             <!-- Close button -->
             <button
@@ -333,6 +259,7 @@ import {
   MenuItems,
 } from "@headlessui/vue";
 import { Bars3Icon, BellIcon, XMarkIcon } from "@heroicons/vue/24/outline";
+import BloodPressureChart from "../components/BloodPressureChart.vue";
 
 const user = {
   name: "Tom Cook",
@@ -369,6 +296,12 @@ export default {
       respiratoryRate: "",
       showModal: false,
       editVitalSignId: null,
+      selectedTTv: null,
+      selectedPatientId: null,
+      selectedBloodPressure: null,
+      chartOptions: {
+        responsive: true,
+      },
     };
   },
   methods: {
@@ -380,7 +313,7 @@ export default {
       this.isLoading = true;
       this.error = null;
       try {
-        const response = await axios.get("http://localhost:3001/ttv", {
+        const response = await axios.get("http://localhost:3001/patients", {
           params: { name: this.searchQuery },
         });
         console.log(response.data);
@@ -393,58 +326,33 @@ export default {
       }
     },
 
-    async deleteVitalSign(vitalSignId) {
+    async fetchPatientTtvs(patientsId) {
+      this.isLoading = true;
+      this.error = null;
+      this.selectedPatientId = patientsId;
+
       try {
-        await axios.delete(`http://localhost:3001/ttv/${vitalSignId}`);
-        console.log(`Vital Sign with ID ${vitalSignId} deleted successfully.`);
-        this.search(); // Refresh vital sign data
-      } catch (error) {
-        console.error(
-          `Error deleting Vital Sign with ID ${vitalSignId}.`,
-          error
+        const response = await axios.get(
+          `http://localhost:3001/ttv/patient/${patientsId}`
         );
-      }
-    },
+        this.selectedTTv = response.data.data;
+        console.log("tes", response.data.data);
 
-    async submitVitalSign() {
-      try {
-        if (this.editVitalSignId) {
-          // Update existing vital sign
-          const response = await axios.put(
-            `http://localhost:3001/ttv/${this.editVitalSignId}`,
-            {
-              name: this.patientName,
-              temperature: this.temperature,
-              heart_rate: this.heartRate,
-              blood_pressure_systolic: this.systolicBP,
-              blood_pressure_diastolic: this.diastolicBP,
-              respiratory_rate: this.respiratoryRate,
-            }
-          );
-          console.log("response data", response.data);
-          this.clearForm();
-        } else {
-          const response = await axios.post("http://localhost:3001/ttv", {
-            name: this.patientName,
-            temperature: this.temperature,
-            heart_rate: this.heartRate,
-            blood_pressure_systolic: this.systolicBP,
-            blood_pressure_diastolic: this.diastolicBP,
-            respiratory_rate: this.respiratoryRate,
-          });
-          console.log("response data", response.data);
-        }
+        const bloodPressureData = this.selectedTTv.map((entry) => ({
+          timestamp: this.formatTimestampShorter(entry.timestamp),
+          systolic: entry.blood_pressure_systolic,
+          diastolic: entry.blood_pressure_diastolic,
+        }));
 
-        // Clear form inputs
-        this.clearForm();
-        // Refresh vital sign data
-        this.search();
-
-        // Close the modal
-        this.showModal = false;
+        this.selectedBloodPressure = bloodPressureData;
       } catch (error) {
+        this.error = "An error occurred while fetching vital sign data.";
         console.error(error);
+      } finally {
+        this.isLoading = false;
       }
+
+      this.showModal = true;
     },
 
     formatTimestamp(timestamp) {
@@ -472,6 +380,20 @@ export default {
       this.systolicBP = "";
       this.diastolicBP = "";
       this.respiratoryRate = "";
+    },
+
+    formatTimestampShorter(timestamp) {
+      const date = new Date(timestamp);
+      const formattedDate = date.toLocaleDateString("en-US", {
+        month: "2-digit",
+        day: "2-digit",
+        year: "2-digit",
+      });
+      const formattedTime = date.toLocaleTimeString("en-US", {
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+      return `${formattedDate} ${formattedTime}`;
     },
   },
 

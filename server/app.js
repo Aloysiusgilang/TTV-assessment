@@ -40,6 +40,28 @@ app.get("/ttv", async (req, res) => {
   }
 });
 
+// get all ttv for a patient
+app.get("/ttv/patient/:id", async (req, res) => {
+  let status = 200;
+  let retVal = {};
+
+  const { id } = req.params;
+
+  try {
+    let query = "SELECT * FROM vital_sign WHERE patient_id = ?";
+    let values = [id];
+
+    const [rows] = await connection.query(query, values);
+    retVal.data = rows;
+  } catch (error) {
+    console.error(error);
+    retVal.error = error;
+    status = 500;
+  } finally {
+    res.status(status).json(retVal);
+  }
+});
+
 // update ttv with id
 app.put("/ttv/:id", async (req, res) => {
   let status = 200;
@@ -224,10 +246,22 @@ app.get("/patients", async (req, res) => {
   let status = 200;
   let retVal = {};
 
+  const { name } = req.query;
+  console.log("params", name);
+
   try {
-    const query = "SELECT * FROM patients";
-    const [rows] = await connection.query(query);
+    let query = "SELECT * FROM patients";
+    let values = [];
+    if (name) {
+      query += " WHERE patients.name LIKE ?";
+      values.push(`%${name}%`);
+    }
+
+    console.log("query", query);
+    const [rows] = await connection.query(query, values);
     retVal.data = rows;
+
+    console.log("patient", retVal.data);
   } catch (error) {
     console.error(error);
     retVal.error = error;
