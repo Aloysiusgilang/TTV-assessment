@@ -157,7 +157,7 @@
         class="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8 flex justify-between"
       >
         <h1 class="text-3xl font-bold tracking-tight text-gray-900">
-          Riwayat TTV
+          Daftar Pasien
         </h1>
         <button
           @click="openModal"
@@ -186,176 +186,22 @@
           </button>
         </div>
 
-        <!-- Filters -->
-
-        <div class="mb-4 flex items-center">
-          <p class="text-md text-gray-800 mr-4">Filter by:</p>
-          <div class="relative inline-flex">
-            <select
-              v-model="filterDateTime"
-              class="appearance-none bg-white border border-gray-300 rounded-lg py-2 px-4 pr-8 leading-tight focus:outline-none focus:border-blue-500"
-              @change="search"
-            >
-              <option value="">All Dates</option>
-              <option value="past24">Past 24 Hours</option>
-              <option value="past7">Past 7 Days</option>
-              <option value="past30">Past 30 Days</option>
-            </select>
-            <div
-              class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700"
-            >
-              <svg
-                class="fill-current h-4 w-4"
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 20 20"
-              >
-                <path
-                  fill-rule="evenodd"
-                  d="M12.293 6.293a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L13 9.414V17a1 1 0 11-2 0v-7.586l-1.293 1.293a1 1 0 01-1.414-1.414l3-3z"
-                  clip-rule="evenodd"
-                />
-              </svg>
-            </div>
-          </div>
-        </div>
-
         <!-- Results -->
         <div class="overflow-x-auto">
-          <table class="w-full border-collapse">
-            <thead>
-              <tr>
-                <th class="border px-4 py-2">Name</th>
-                <th class="border px-4 py-2">Temperature</th>
-                <th class="border px-4 py-2">Heart Rate</th>
-                <th class="border px-4 py-2">Blood Pressure</th>
-                <th class="border px-4 py-2">Respiratory Rate</th>
-                <th class="border px-4 py-2">Timestamp</th>
-                <th class="border border-gray-300 px-4 py-2">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-if="isLoading" class="text-gray-700">
-                <td colspan="6" class="py-2">Loading...</td>
-              </tr>
-              <tr v-else-if="error" class="text-red-500">
-                <td colspan="6" class="py-2">{{ error }}</td>
-              </tr>
-              <tr
-                v-else
-                v-for="vitalSign in filteredVitalSigns"
-                :key="vitalSign.name"
-                class="mb-4 hover:bg-gray-100"
-              >
-                <td class="border px-4 py-2">{{ vitalSign.name }}</td>
-                <td class="border px-4 py-2 text-center">
-                  <span
-                    class="inline-block h-2 w-2 rounded-full"
-                    :class="{
-                      'bg-green-400':
-                        vitalSign.temperature >= 97.7 &&
-                        vitalSign.temperature <= 99.5,
-                      'bg-yellow-400':
-                        vitalSign.temperature < 97.7 ||
-                        vitalSign.temperature > 99.5,
-                    }"
-                    :title="
-                      vitalSign.temperature >= 97.7 &&
-                      vitalSign.temperature <= 99.5
-                        ? 'Normal'
-                        : 'Abnormal'
-                    "
-                  ></span>
-                  {{ vitalSign.temperature }}
-                </td>
-                <td class="border px-4 py-2 text-center">
-                  <span
-                    class="inline-block h-2 w-2 rounded-full"
-                    :class="{
-                      'bg-green-400':
-                        vitalSign.heart_rate >= 60 &&
-                        vitalSign.heart_rate <= 100,
-                      'bg-yellow-400':
-                        vitalSign.heart_rate < 60 || vitalSign.heart_rate > 100,
-                    }"
-                    :title="
-                      vitalSign.heart_rate >= 60 && vitalSign.heart_rate <= 100
-                        ? 'Normal'
-                        : 'Abnormal'
-                    "
-                  ></span>
-                  {{ vitalSign.heart_rate }}
-                </td>
-                <td class="border px-4 py-2 text-center">
-                  <span
-                    class="inline-block h-2 w-2 rounded-full"
-                    :class="{
-                      'bg-green-400':
-                        vitalSign.blood_pressure_systolic >= 90 &&
-                        vitalSign.blood_pressure_systolic <= 120 &&
-                        vitalSign.blood_pressure_diastolic >= 60 &&
-                        vitalSign.blood_pressure_diastolic <= 80,
-                      'bg-yellow-400':
-                        vitalSign.blood_pressure_systolic < 90 ||
-                        vitalSign.blood_pressure_systolic > 120 ||
-                        vitalSign.blood_pressure_diastolic < 60 ||
-                        vitalSign.blood_pressure_diastolic > 80,
-                    }"
-                    :title="
-                      vitalSign.blood_pressure_systolic >= 90 &&
-                      vitalSign.blood_pressure_systolic <= 120 &&
-                      vitalSign.blood_pressure_diastolic >= 60 &&
-                      vitalSign.blood_pressure_diastolic <= 80
-                        ? 'Normal'
-                        : 'Abnormal'
-                    "
-                  ></span>
-                  {{ vitalSign.blood_pressure_systolic }}/{{
-                    vitalSign.blood_pressure_diastolic
-                  }}
-                </td>
-                <td class="border px-4 py-2 text-center">
-                  <span
-                    class="inline-block h-2 w-2 rounded-full"
-                    :class="{
-                      'bg-green-400':
-                        vitalSign.respiratory_rate >= 12 &&
-                        vitalSign.respiratory_rate <= 20,
-                      'bg-yellow-400':
-                        vitalSign.respiratory_rate < 12 ||
-                        vitalSign.respiratory_rate > 20,
-                    }"
-                    :title="
-                      vitalSign.respiratory_rate >= 12 &&
-                      vitalSign.respiratory_rate <= 20
-                        ? 'Normal'
-                        : 'Abnormal'
-                    "
-                  ></span>
-                  {{ vitalSign.respiratory_rate }}
-                </td>
-                <td class="border px-4 py-2">
-                  {{ formatTimestamp(vitalSign.timestamp) }}
-                </td>
-                <td class="border border-gray-300 px-4 py-2">
-                  <button
-                    @click="editVitalSign(vitalSign)"
-                    class="text-blue-500 underline mr-2"
-                  >
-                    Edit
-                  </button>
-                  <button
-                    @click="deleteVitalSign(vitalSign.id)"
-                    class="text-red-500 underline"
-                  >
-                    Delete
-                  </button>
-                </td>
-              </tr>
-              <tr v-if="vitalSigns.length === 0" class="text-gray-700">
-                <td colspan="6" class="py-2">No results found.</td>
-              </tr>
-            </tbody>
-          </table>
+          <div v-if="isLoading" class="text-gray-700">
+            <td colspan="6" class="py-2">Loading...</td>
+          </div>
+          <div v-else-if="error" class="text-red-500">
+            <div colspan="6" class="py-2">{{ error }}</div>
+          </div>
+          <div
+            v-else
+            v-for="vitalSign in vitalSigns"
+            :key="vitalSign.name"
+            class="mb-4 hover:bg-gray-100"
+          >
+            <div class="border px-4 py-2">{{ vitalSign.name }}</div>
+          </div>
         </div>
 
         <!-- Vital Sign Assessment Form -->
@@ -367,7 +213,7 @@
           <!-- Dark overlay -->
 
           <div class="bg-white rounded-lg shadow-lg p-6 relative">
-            <h2 class="text-xl font-bold mb-4">Vital Sign Assessment Form</h2>
+            <h2 class="text-xl font-bold mb-4">Patient's statistics</h2>
             <form @submit.prevent="submitVitalSign">
               <div class="mb-4">
                 <label for="patientName" class="font-bold"
@@ -495,8 +341,8 @@ const user = {
     "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80",
 };
 const navigation = [
-  { name: "Dashboard", href: "/", current: true },
-  { name: "Patients", href: "/patients", current: false },
+  { name: "Dashboard", href: "/", current: false },
+  { name: "Patients", href: "/patients", current: true },
 ];
 const userNavigation = [
   { name: "Your Profile", href: "#" },
@@ -521,7 +367,6 @@ export default {
       systolicBP: "",
       diastolicBP: "",
       respiratoryRate: "",
-      filterDateTime: null,
       showModal: false,
       editVitalSignId: null,
     };
@@ -632,42 +477,6 @@ export default {
 
   created() {
     this.search();
-  },
-  computed: {
-    filteredVitalSigns() {
-      let filteredData = this.vitalSigns;
-
-      // Apply name filter
-      if (this.searchQuery) {
-        filteredData = filteredData.filter((vitalSign) =>
-          vitalSign.name.toLowerCase().includes(this.searchQuery.toLowerCase())
-        );
-      }
-
-      // Apply datetime filter
-      if (this.filterDateTime) {
-        const currentDate = new Date();
-        const past24Hours = new Date(currentDate - 24 * 60 * 60 * 1000);
-        const past7Days = new Date(currentDate - 7 * 24 * 60 * 60 * 1000);
-        const past30Days = new Date(currentDate - 30 * 24 * 60 * 60 * 1000);
-
-        if (this.filterDateTime === "past24") {
-          filteredData = filteredData.filter(
-            (vitalSign) => new Date(vitalSign.timestamp) >= past24Hours
-          );
-        } else if (this.filterDateTime === "past7") {
-          filteredData = filteredData.filter(
-            (vitalSign) => new Date(vitalSign.timestamp) >= past7Days
-          );
-        } else if (this.filterDateTime === "past30") {
-          filteredData = filteredData.filter(
-            (vitalSign) => new Date(vitalSign.timestamp) >= past30Days
-          );
-        }
-      }
-
-      return filteredData;
-    },
   },
 };
 </script>
