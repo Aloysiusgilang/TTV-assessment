@@ -5,11 +5,7 @@
         <div class="flex h-16 items-center justify-between">
           <div class="flex items-center">
             <div class="flex-shrink-0">
-              <img
-                class="h-8 w-8"
-                src="https://tailwindui.com/img/logos/mark.svg?color=indigo&shade=500"
-                alt="Your Company"
-              />
+              <img class="h-20 w-20" src="/logo-kp.svg" alt="Your Company" />
             </div>
             <div class="hidden md:block">
               <div class="ml-10 flex items-baseline space-x-4">
@@ -159,12 +155,6 @@
         <h1 class="text-3xl font-bold tracking-tight text-gray-900">
           Daftar Pasien
         </h1>
-        <button
-          @click="openModal"
-          class="bg-blue-500 text-white px-4 py-2 rounded-lg"
-        >
-          Add Entry
-        </button>
       </div>
     </header>
     <main class="w-full">
@@ -196,16 +186,32 @@
           </div>
           <div
             v-else
-            v-for="vitalSign in vitalSigns"
-            :key="vitalSign.name"
+            v-for="data in patientData"
+            :key="data.name"
             class="mb-4 hover:bg-gray-100 cursor-pointer"
-            @click="fetchPatientTtvs(vitalSign.id)"
+            @click="fetchPatientTtvs(data.id, data.name)"
           >
-            <div class="border px-4 py-2">{{ vitalSign.name }}</div>
+            <div class="border px-4 py-2 flex justify-between">
+              <p>{{ data.name }}</p>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth="{1.5}"
+                stroke="currentColor"
+                class="w-6 h-6"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M7.5 14.25v2.25m3-4.5v4.5m3-6.75v6.75m3-9v9M6 20.25h12A2.25 2.25 0 0020.25 18V6A2.25 2.25 0 0018 3.75H6A2.25 2.25 0 003.75 6v12A2.25 2.25 0 006 20.25z"
+                />
+              </svg>
+            </div>
           </div>
         </div>
 
-        <!-- Vital Sign Assessment Form -->
+        <!-- Statistic Modal -->
         <div
           v-if="showModal"
           class="fixed inset-0 flex items-center justify-center z-50"
@@ -215,11 +221,167 @@
 
           <div class="bg-white rounded-lg shadow-lg p-6 relative">
             <h2 class="text-xl font-bold mb-4">Patient's statistics</h2>
+            <div>
+              <p class="text-md mb-4">Nama pasien : {{ selectedName }}</p>
+            </div>
+            <div class="grid grid-cols-2 gap-4 mb-4">
+              <div>
+                <p class="text-sm text-gray-400 text-center">Blood Pressure</p>
+                <BloodPressureChart
+                  :data="selectedBloodPressure"
+                  :options="chartOptions"
+                />
+              </div>
+              <div>
+                <p class="text-sm text-gray-400 text-center">Temperature</p>
+                <TemperatureChart
+                  :data="selectedTemperature"
+                  :options="chartOptions"
+                />
+              </div>
+            </div>
 
-            <BloodPressureChart
-              :data="selectedBloodPressure"
-              :options="chartOptions"
-            />
+            <div class="grid grid-cols-2 gap-4 mb-8">
+              <div>
+                <p class="text-sm text-gray-400 text-center">Heart Rate</p>
+                <HeartRateChart
+                  :data="selectedHeartRate"
+                  :options="chartOptions"
+                />
+              </div>
+              <div>
+                <p class="text-sm text-gray-400 text-center">
+                  Respiratory Rate
+                </p>
+                <RespiratoryRateChart
+                  :data="selectedRespiratoryRate"
+                  :options="chartOptions"
+                />
+              </div>
+            </div>
+
+            <div class="overflow-x-auto">
+              <table class="w-full border-collapse">
+                <thead>
+                  <tr>
+                    <th class="border px-4 py-2">Temperature</th>
+                    <th class="border px-4 py-2">Heart Rate</th>
+                    <th class="border px-4 py-2">Blood Pressure</th>
+                    <th class="border px-4 py-2">Respiratory Rate</th>
+                    <th class="border px-4 py-2">Timestamp</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-if="isLoading" class="text-gray-700">
+                    <td colspan="6" class="py-2">Loading...</td>
+                  </tr>
+                  <tr v-else-if="error" class="text-red-500">
+                    <td colspan="6" class="py-2">{{ error }}</td>
+                  </tr>
+                  <tr
+                    v-else
+                    v-for="vitalSign in selectedTTv"
+                    :key="vitalSign.name"
+                    class="mb-4 hover:bg-gray-100"
+                  >
+                    <td class="border px-4 py-2 text-center">
+                      <span
+                        class="inline-block h-2 w-2 rounded-full"
+                        :class="{
+                          'bg-green-400':
+                            vitalSign.temperature >= 97.7 &&
+                            vitalSign.temperature <= 99.5,
+                          'bg-yellow-400':
+                            vitalSign.temperature < 97.7 ||
+                            vitalSign.temperature > 99.5,
+                        }"
+                        :title="
+                          vitalSign.temperature >= 97.7 &&
+                          vitalSign.temperature <= 99.5
+                            ? 'Normal'
+                            : 'Abnormal'
+                        "
+                      ></span>
+                      {{ vitalSign.temperature }}
+                    </td>
+                    <td class="border px-4 py-2 text-center">
+                      <span
+                        class="inline-block h-2 w-2 rounded-full"
+                        :class="{
+                          'bg-green-400':
+                            vitalSign.heart_rate >= 60 &&
+                            vitalSign.heart_rate <= 100,
+                          'bg-yellow-400':
+                            vitalSign.heart_rate < 60 ||
+                            vitalSign.heart_rate > 100,
+                        }"
+                        :title="
+                          vitalSign.heart_rate >= 60 &&
+                          vitalSign.heart_rate <= 100
+                            ? 'Normal'
+                            : 'Abnormal'
+                        "
+                      ></span>
+                      {{ vitalSign.heart_rate }}
+                    </td>
+                    <td class="border px-4 py-2 text-center">
+                      <span
+                        class="inline-block h-2 w-2 rounded-full"
+                        :class="{
+                          'bg-green-400':
+                            vitalSign.blood_pressure_systolic >= 90 &&
+                            vitalSign.blood_pressure_systolic <= 120 &&
+                            vitalSign.blood_pressure_diastolic >= 60 &&
+                            vitalSign.blood_pressure_diastolic <= 80,
+                          'bg-yellow-400':
+                            vitalSign.blood_pressure_systolic < 90 ||
+                            vitalSign.blood_pressure_systolic > 120 ||
+                            vitalSign.blood_pressure_diastolic < 60 ||
+                            vitalSign.blood_pressure_diastolic > 80,
+                        }"
+                        :title="
+                          vitalSign.blood_pressure_systolic >= 90 &&
+                          vitalSign.blood_pressure_systolic <= 120 &&
+                          vitalSign.blood_pressure_diastolic >= 60 &&
+                          vitalSign.blood_pressure_diastolic <= 80
+                            ? 'Normal'
+                            : 'Abnormal'
+                        "
+                      ></span>
+                      {{ vitalSign.blood_pressure_systolic }}/{{
+                        vitalSign.blood_pressure_diastolic
+                      }}
+                    </td>
+                    <td class="border px-4 py-2 text-center">
+                      <span
+                        class="inline-block h-2 w-2 rounded-full"
+                        :class="{
+                          'bg-green-400':
+                            vitalSign.respiratory_rate >= 12 &&
+                            vitalSign.respiratory_rate <= 20,
+                          'bg-yellow-400':
+                            vitalSign.respiratory_rate < 12 ||
+                            vitalSign.respiratory_rate > 20,
+                        }"
+                        :title="
+                          vitalSign.respiratory_rate >= 12 &&
+                          vitalSign.respiratory_rate <= 20
+                            ? 'Normal'
+                            : 'Abnormal'
+                        "
+                      ></span>
+                      {{ vitalSign.respiratory_rate }}
+                    </td>
+                    <td class="border px-4 py-2">
+                      {{ formatTimestamp(vitalSign.timestamp) }}
+                    </td>
+                  </tr>
+                  <tr v-if="selectedTTv.length === 0" class="text-gray-700">
+                    <td colspan="6" class="py-2">No results found.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
 
             <!-- Close button -->
             <button
@@ -260,6 +422,9 @@ import {
 } from "@headlessui/vue";
 import { Bars3Icon, BellIcon, XMarkIcon } from "@heroicons/vue/24/outline";
 import BloodPressureChart from "../components/BloodPressureChart.vue";
+import HeartRateChart from "../components/HeartRateChart.vue";
+import TemperatureChart from "../components/TemperatureChart.vue";
+import RespiratoryRateChart from "../components/RespiratoryRateChart.vue";
 
 const user = {
   name: "Tom Cook",
@@ -285,7 +450,7 @@ export default {
   data() {
     return {
       searchQuery: "",
-      vitalSigns: [],
+      patientData: [],
       isLoading: false,
       error: null,
       patientName: "",
@@ -296,9 +461,13 @@ export default {
       respiratoryRate: "",
       showModal: false,
       editVitalSignId: null,
+      selectedName: null,
       selectedTTv: null,
       selectedPatientId: null,
       selectedBloodPressure: null,
+      selectedHeartRate: null,
+      selectedTemperature: null,
+      selectedRespiratoryRate: null,
       chartOptions: {
         responsive: true,
       },
@@ -313,11 +482,14 @@ export default {
       this.isLoading = true;
       this.error = null;
       try {
-        const response = await axios.get("http://localhost:3001/patients", {
-          params: { name: this.searchQuery },
-        });
+        const response = await axios.get(
+          "https://impossible-gold-cod.cyclic.app/patients",
+          {
+            params: { name: this.searchQuery },
+          }
+        );
         console.log(response.data);
-        this.vitalSigns = response.data.data;
+        this.patientData = response.data.data;
       } catch (error) {
         this.error = "An error occurred while fetching vital sign data.";
         console.error(error);
@@ -326,14 +498,15 @@ export default {
       }
     },
 
-    async fetchPatientTtvs(patientsId) {
+    async fetchPatientTtvs(patientsId, name) {
       this.isLoading = true;
       this.error = null;
       this.selectedPatientId = patientsId;
+      this.selectedName = name;
 
       try {
         const response = await axios.get(
-          `http://localhost:3001/ttv/patient/${patientsId}`
+          `https://impossible-gold-cod.cyclic.app/ttv/patient/${patientsId}`
         );
         this.selectedTTv = response.data.data;
         console.log("tes", response.data.data);
@@ -344,7 +517,25 @@ export default {
           diastolic: entry.blood_pressure_diastolic,
         }));
 
+        const temperatureData = this.selectedTTv.map((entry) => ({
+          timestamp: this.formatTimestampShorter(entry.timestamp),
+          temperature: entry.temperature,
+        }));
+
+        const heartRateData = this.selectedTTv.map((entry) => ({
+          timestamp: this.formatTimestampShorter(entry.timestamp),
+          heartRate: entry.heart_rate,
+        }));
+
+        const respiratoryRateData = this.selectedTTv.map((entry) => ({
+          timestamp: this.formatTimestampShorter(entry.timestamp),
+          respiratoryRate: entry.respiratory_rate,
+        }));
+
         this.selectedBloodPressure = bloodPressureData;
+        this.selectedTemperature = temperatureData;
+        this.selectedHeartRate = heartRateData;
+        this.selectedRespiratoryRate = respiratoryRateData;
       } catch (error) {
         this.error = "An error occurred while fetching vital sign data.";
         console.error(error);

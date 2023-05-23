@@ -5,11 +5,7 @@
         <div class="flex h-16 items-center justify-between">
           <div class="flex items-center">
             <div class="flex-shrink-0">
-              <img
-                class="h-8 w-8"
-                src="https://tailwindui.com/img/logos/mark.svg?color=indigo&shade=500"
-                alt="Your Company"
-              />
+              <img class="h-20 w-20" src="/logo-kp.svg" alt="Your Company" />
             </div>
             <div class="hidden md:block">
               <div class="ml-10 flex items-baseline space-x-4">
@@ -336,16 +332,16 @@
                 <td class="border px-4 py-2">
                   {{ formatTimestamp(vitalSign.timestamp) }}
                 </td>
-                <td class="border border-gray-300 px-4 py-2">
+                <td class="border border-gray px-4 py-2">
                   <button
                     @click="editVitalSign(vitalSign)"
-                    class="text-blue-500 underline mr-2"
+                    class="bg-blue-400 text-white font-semibold text-sm px-4 py-1 rounded-full mr-2"
                   >
                     Edit
                   </button>
                   <button
-                    @click="deleteVitalSign(vitalSign.id)"
-                    class="text-red-500 underline"
+                    @click="openDeleteModal(vitalSign.id)"
+                    class="bg-red-400 text-white font-semibold text-sm px-4 py-1 rounded-full"
                   >
                     Delete
                   </button>
@@ -357,6 +353,71 @@
             </tbody>
           </table>
         </div>
+
+        <TransitionRoot appear :show="showDeleteModal" as="template">
+          <Dialog as="div" @close="closeDeleteModal" class="relative z-10">
+            <TransitionChild
+              as="template"
+              enter="duration-300 ease-out"
+              enter-from="opacity-0"
+              enter-to="opacity-100"
+              leave="duration-200 ease-in"
+              leave-from="opacity-100"
+              leave-to="opacity-0"
+            >
+              <div class="fixed inset-0 bg-black bg-opacity-25" />
+            </TransitionChild>
+
+            <div class="fixed inset-0 overflow-y-auto">
+              <div
+                class="flex min-h-full items-center justify-center p-4 text-center"
+              >
+                <TransitionChild
+                  as="template"
+                  enter="duration-300 ease-out"
+                  enter-from="opacity-0 scale-95"
+                  enter-to="opacity-100 scale-100"
+                  leave="duration-200 ease-in"
+                  leave-from="opacity-100 scale-100"
+                  leave-to="opacity-0 scale-95"
+                >
+                  <DialogPanel
+                    class="w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all"
+                  >
+                    <DialogTitle
+                      as="h3"
+                      class="text-lg font-medium leading-6 text-gray-900"
+                    >
+                      Delete Entry
+                    </DialogTitle>
+                    <div class="mt-2">
+                      <p class="text-sm text-gray-500">
+                        Are you sure you want to delete this vital sign?
+                      </p>
+                    </div>
+
+                    <div class="mt-4">
+                      <button
+                        type="button"
+                        class="inline-flex justify-center rounded-md border border-transparent bg-blue-100 px-4 py-2 mr-2 text-sm font-medium text-blue-900 hover:bg-blue-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+                        @click="deleteVitalSign(editVitalSignId)"
+                      >
+                        Delete
+                      </button>
+                      <button
+                        type="button"
+                        class="inline-flex justify-center rounded-md border border-transparent bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+                        @click="closeDeleteModal"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </DialogPanel>
+                </TransitionChild>
+              </div>
+            </div>
+          </Dialog>
+        </TransitionRoot>
 
         <!-- Vital Sign Assessment Form -->
         <div
@@ -485,6 +546,11 @@ import {
   MenuButton,
   MenuItem,
   MenuItems,
+  TransitionRoot,
+  TransitionChild,
+  Dialog,
+  DialogPanel,
+  DialogTitle,
 } from "@headlessui/vue";
 import { Bars3Icon, BellIcon, XMarkIcon } from "@heroicons/vue/24/outline";
 
@@ -523,6 +589,7 @@ export default {
       respiratoryRate: "",
       filterDateTime: null,
       showModal: false,
+      showDeleteModal: false,
       editVitalSignId: null,
     };
   },
@@ -531,13 +598,26 @@ export default {
       this.showModal = true; // Show the modal when the button is clicked
     },
 
+    openDeleteModal(vitalSignId) {
+      this.editVitalSignId = vitalSignId;
+      this.showDeleteModal = true; // Show the modal when the button is clicked
+    },
+
+    closeDeleteModal() {
+      this.editVitalSignId = null;
+      this.showDeleteModal = false; // Show the modal when the button is clicked
+    },
+
     async search() {
       this.isLoading = true;
       this.error = null;
       try {
-        const response = await axios.get("http://localhost:3001/ttv", {
-          params: { name: this.searchQuery },
-        });
+        const response = await axios.get(
+          "https://impossible-gold-cod.cyclic.app/ttv",
+          {
+            params: { name: this.searchQuery },
+          }
+        );
         console.log(response.data);
         this.vitalSigns = response.data.data;
       } catch (error) {
@@ -550,7 +630,9 @@ export default {
 
     async deleteVitalSign(vitalSignId) {
       try {
-        await axios.delete(`http://localhost:3001/ttv/${vitalSignId}`);
+        await axios.delete(
+          `https://impossible-gold-cod.cyclic.app/ttv/${vitalSignId}`
+        );
         console.log(`Vital Sign with ID ${vitalSignId} deleted successfully.`);
         this.search(); // Refresh vital sign data
       } catch (error) {
@@ -559,6 +641,8 @@ export default {
           error
         );
       }
+
+      this.closeDeleteModal();
     },
 
     async submitVitalSign() {
@@ -566,7 +650,7 @@ export default {
         if (this.editVitalSignId) {
           // Update existing vital sign
           const response = await axios.put(
-            `http://localhost:3001/ttv/${this.editVitalSignId}`,
+            `https://impossible-gold-cod.cyclic.app/ttv/${this.editVitalSignId}`,
             {
               name: this.patientName,
               temperature: this.temperature,
@@ -579,14 +663,17 @@ export default {
           console.log("response data", response.data);
           this.clearForm();
         } else {
-          const response = await axios.post("http://localhost:3001/ttv", {
-            name: this.patientName,
-            temperature: this.temperature,
-            heart_rate: this.heartRate,
-            blood_pressure_systolic: this.systolicBP,
-            blood_pressure_diastolic: this.diastolicBP,
-            respiratory_rate: this.respiratoryRate,
-          });
+          const response = await axios.post(
+            "https://impossible-gold-cod.cyclic.app/ttv",
+            {
+              name: this.patientName,
+              temperature: this.temperature,
+              heart_rate: this.heartRate,
+              blood_pressure_systolic: this.systolicBP,
+              blood_pressure_diastolic: this.diastolicBP,
+              respiratory_rate: this.respiratoryRate,
+            }
+          );
           console.log("response data", response.data);
         }
 
