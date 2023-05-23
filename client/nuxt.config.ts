@@ -10,4 +10,5 @@ export default defineNuxtConfig({
   devServer: {
     url: "http://localhost:3001",
   },
+  modules: ["nuxt-headlessui"],
 });
